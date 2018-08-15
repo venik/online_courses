@@ -133,7 +133,7 @@ class KNearestNeighbor(object):
     te = np.square(X).sum(axis=1)
     tr = np.square(self.X_train).sum(axis=1)
     dists = np.sqrt(-2*M + np.matrix(tr) + np.matrix(te).T)
-
+    dists = np.asarray(dists)
     # uber slow broadcasting
     # dists = np.sqrt(np.sum(np.power(self.X_train - X[:, np.newaxis], 2), axis=2))
     #########################################################################
@@ -167,21 +167,27 @@ class KNearestNeighbor(object):
       # neighbors. Store these labels in closest_y.                           #
       # Hint: Look up the function numpy.argsort.                             #
       #########################################################################
-      closest_y = np.argsort(dists[i])[0:k]
+      dists_i = dists[i]
+      closes_idx = dists_i.argsort()[:k]
+      closest_y = self.y_train[closes_idx]
       #########################################################################
       # TODO:                                                                 #
       # Now that you have found the labels of the k nearest neighbors, you    #
       # need to find the most common label in the list closest_y of labels.   #
       # Store this label in y_pred[i]. Break ties by choosing the smaller     #
       # label.                                                                #
-      #########################################################################
-      res = {}
-      for kk in xrange(k):
-        tmp = res.get(self.y_train[closest_y[kk]], 0)
-        res[self.y_train[closest_y[kk]]] = tmp + 1
+      # #########################################################################
+      from collections import Counter
+      y_pred[i] = Counter(closest_y).most_common(1)[0][0]
 
-      #y_pred[i] = self.y_train[closest_y[0]]
-      y_pred[i] = max(res, key=res.get)
+      # res = {}
+      # for kk in xrange(k):
+      #   idx = self.y_train[closest_y[kk]]
+      #   tmp = res.get(idx, 0)
+      #   res[self.y_train[closest_y[kk]]] = tmp + 1
+      #
+      # #y_pred[i] = self.y_train[closest_y[0]]
+      # y_pred[i] = max(res, key=res.get)
       #########################################################################
       #                           END OF YOUR CODE                            # 
       #########################################################################
