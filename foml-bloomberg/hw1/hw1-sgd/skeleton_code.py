@@ -29,13 +29,13 @@ def feature_normalization(train, test):
     """
     # TODO
     (train_num_instances, train_num_features) = train.shape
-    train_num_features_min = np.zeros((train_num_features))
-    train_num_features_max = np.zeros((train_num_features))
+    train_num_features_min = np.zeros((train_num_features), dtype=float)
+    train_num_features_max = np.zeros((train_num_features), dtype=float)
 
     for col in np.arange(train_num_features):
         cur_col = train[:, col]
         var = np.var(cur_col)
-        if var != 0.0:
+        if np.allclose(var, 0.0) == False:
             train_num_features_min[col] = np.amin(cur_col)
             train_num_features_max[col] = np.amax(cur_col) - train_num_features_min[col]
         else: 
@@ -93,7 +93,7 @@ def compute_square_loss_gradient(X, y, theta):
         grad - gradient vector, 1D numpy array of size (num_features)
     """
 
-    return 2 * X.T.dot(X.dot(theta) - y) / X.shape[0]
+    return 2 * X.T.dot(X.dot(theta) - y) / float(X.shape[0])
 
 
 ###########################################
@@ -151,7 +151,7 @@ def generic_gradient_checker(X, y, theta, objective_func, gradient_func, epsilon
 
 ####################################
 #### Batch Gradient Descent
-def batch_grad_descent(X, y, alpha=0.010, num_iter=10000, check_gradient=False):
+def batch_grad_descent(X, y, alpha=0.05, num_iter=1000, check_gradient=False):
     """
     In this question you will implement batch gradient descent to
     minimize the square loss objective
@@ -169,11 +169,12 @@ def batch_grad_descent(X, y, alpha=0.010, num_iter=10000, check_gradient=False):
         loss_hist - the history of objective function vector, 1D numpy array of size (num_iter+1)
     """
     num_instances, num_features = X.shape[0], X.shape[1]
-    theta_hist = np.zeros((num_iter+1, num_features))  #Initialize theta_hist
-    loss_hist = np.zeros(num_iter+1) #initialize loss_hist
-    theta = np.zeros(num_features) #initialize theta
+    theta_hist = np.zeros((num_iter+1, num_features), dtype=float)  #Initialize theta_hist
+    loss_hist = np.zeros(num_iter+1, dtype=float) #initialize loss_hist
+    theta = np.zeros(num_features, dtype=float) #initialize theta
 
     for i in xrange(num_iter + 1):
+        print(str(theta))
         loss_hist[i] = compute_square_loss(X, y, theta)
         theta_hist[i] = theta
         # print('' + str(theta))
@@ -181,6 +182,7 @@ def batch_grad_descent(X, y, alpha=0.010, num_iter=10000, check_gradient=False):
         theta = theta - alpha * compute_square_loss_gradient(X, y, theta)
 
     print(str(loss_hist))
+    plt.grid()
     plt.plot(loss_hist)
     plt.savefig('testfigure.png', dpi=100)
     # plt.show(block=True)
@@ -279,21 +281,21 @@ def main():
 
     # print('Split into Train and Test. Shape: ' + str(X.shape))
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=100, random_state=10)
-    print('X_train shape: ' + str(y_train.shape))
-    # X_train = np.append(np.random.randn(5, 2) * 5, np.zeros((5, 1)), axis=1)
-    # X_test = np.append(np.random.randn(5, 2) * 5, np.zeros((5, 1)), axis=1)
+
+    # small data
+    #X_train = np.array(([1, 2, 3], [4, 5, 6]))
+    #X_test = np.array(([1, 2, 3], [4, 5, 6]))
+    #y_train = np.array([1, 1], dtype = float)
 
     print("Scaling all to [0, 1]")
-    #X_train, X_test = feature_normalization(X_train, X_test)
-    #X_train = np.hstack((X_train, np.ones((X_train.shape[0], 1))))  # Add bias term
-    #X_test = np.hstack((X_test, np.ones((X_test.shape[0], 1)))) # Add bias term
+    X_train, X_test = feature_normalization(X_train, X_test)
+    X_train = np.hstack((X_train, np.ones((X_train.shape[0], 1))))  # Add bias term
+    X_test = np.hstack((X_test, np.ones((X_test.shape[0], 1)))) # Add bias term
+
+    print(str(X_train))
 
     # hw1 2.2.5
-    X = np.array(([1, 2, 3], [4, 5, 6]))
     theta = np.array([1, -1, -1], dtype = float)
-    y = np.array([1, 1], dtype = float)
-    print('X shape: ' + str(y.shape))
-
     # res = compute_square_loss(X, y, theta)
     # res = compute_square_loss(X, np.dot(X, theta), theta)
     # print('compute_square_loss: ' + str(res))
@@ -303,9 +305,7 @@ def main():
     # res = compute_square_loss_gradient(X, np.dot(X, theta), theta)
     # print('compute_square_loss_gradient: ' + str(res))
     
-    # TODO
     batch_grad_descent(X_train, y_train)
-    # batch_grad_descent(X, y)
 
 if __name__ == "__main__":
     main()
