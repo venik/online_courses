@@ -186,7 +186,7 @@ def batch_grad_descent(X, y, alpha=0.050, num_iter=1000, check_gradient=False):
 
     print(str(loss_hist))
     plt.grid()
-    plt.plot(grad_hist)
+    plt.plot(loss_hist)
     plt.savefig('testfigure.png', dpi=100)
     # plt.show(block=True)
 
@@ -329,9 +329,9 @@ def main():
     # res = compute_square_loss_gradient(X, np.dot(X, theta), theta)
     # print('compute_square_loss_gradient: ' + str(res))
     
-    #batch_grad_descent(X_train, y_train)
+    batch_grad_descent(X_train, y_train)
 
-    plot_data(X_train, y_train)
+    # plot_data(X_train, y_train)
 
 if __name__ == "__main__":
     main()
