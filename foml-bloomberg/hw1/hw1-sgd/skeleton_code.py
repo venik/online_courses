@@ -151,7 +151,7 @@ def generic_gradient_checker(X, y, theta, objective_func, gradient_func, epsilon
 
 ####################################
 #### Batch Gradient Descent
-def batch_grad_descent(X, y, alpha=0.05, num_iter=1000, check_gradient=False):
+def batch_grad_descent(X, y, alpha=0.050, num_iter=1000, check_gradient=False):
     """
     In this question you will implement batch gradient descent to
     minimize the square loss objective
@@ -171,6 +171,7 @@ def batch_grad_descent(X, y, alpha=0.05, num_iter=1000, check_gradient=False):
     num_instances, num_features = X.shape[0], X.shape[1]
     theta_hist = np.zeros((num_iter+1, num_features), dtype=float)  #Initialize theta_hist
     loss_hist = np.zeros(num_iter+1, dtype=float) #initialize loss_hist
+    grad_hist = np.zeros(num_iter+1, dtype=float)
     theta = np.zeros(num_features, dtype=float) #initialize theta
 
     for i in xrange(num_iter + 1):
@@ -179,11 +180,13 @@ def batch_grad_descent(X, y, alpha=0.05, num_iter=1000, check_gradient=False):
         theta_hist[i] = theta
         # print('' + str(theta))
         # print('' + str(compute_square_loss_gradient(X, y, theta)))
-        theta = theta - alpha * compute_square_loss_gradient(X, y, theta)
+        grad = compute_square_loss_gradient(X, y, theta)
+        grad_hist[i] = np.linalg.norm(grad)
+        theta = theta - alpha * grad
 
     print(str(loss_hist))
     plt.grid()
-    plt.plot(loss_hist)
+    plt.plot(grad_hist)
     plt.savefig('testfigure.png', dpi=100)
     # plt.show(block=True)
 
@@ -265,6 +268,28 @@ def stochastic_grad_descent(X, y, alpha=0.1, lambda_reg=1, num_iter=1000):
     loss_hist = np.zeros((num_iter, num_instances)) #Initialize loss_hist
     #TODO
 
+def plot_data(X, y):
+    cov_mat = np.cov(X.T)
+    eig_vals, eig_vecs = np.linalg.eig(cov_mat)
+
+    eig_pairs = [(np.abs(eig_vals[i]), eig_vecs[:,i]) for i in range(len(eig_vals))]
+    eig_pairs.sort(key=lambda x: x[0], reverse=True)
+
+    matrix_w = np.hstack((eig_pairs[0][1].reshape(X.shape[1], 1),
+                      eig_pairs[1][1].reshape(X.shape[1], 1)))
+    Ak = X.dot(matrix_w)
+   
+    from mpl_toolkits.mplot3d import Axes3D
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(np.real(Ak[:, 0]), np.real(Ak[:, 1]), y)
+
+    plt.xlabel('Principal Component 1')
+    plt.ylabel('Principal Component 2')
+
+    plt.savefig('testfigure.png')
+
 ################################################
 ### Visualization that compares the convergence speed of batch
 ###and stochastic gradient descent for various approaches to step_size
@@ -281,6 +306,7 @@ def main():
 
     # print('Split into Train and Test. Shape: ' + str(X.shape))
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=100, random_state=10)
+    print(str(X_train.shape))
 
     # small data
     #X_train = np.array(([1, 2, 3], [4, 5, 6]))
@@ -292,10 +318,8 @@ def main():
     X_train = np.hstack((X_train, np.ones((X_train.shape[0], 1))))  # Add bias term
     X_test = np.hstack((X_test, np.ones((X_test.shape[0], 1)))) # Add bias term
 
-    print(str(X_train))
-
     # hw1 2.2.5
-    theta = np.array([1, -1, -1], dtype = float)
+    # theta = np.array([1, -1, -1], dtype = float)
     # res = compute_square_loss(X, y, theta)
     # res = compute_square_loss(X, np.dot(X, theta), theta)
     # print('compute_square_loss: ' + str(res))
@@ -305,7 +329,9 @@ def main():
     # res = compute_square_loss_gradient(X, np.dot(X, theta), theta)
     # print('compute_square_loss_gradient: ' + str(res))
     
-    batch_grad_descent(X_train, y_train)
+    #batch_grad_descent(X_train, y_train)
+
+    plot_data(X_train, y_train)
 
 if __name__ == "__main__":
     main()
