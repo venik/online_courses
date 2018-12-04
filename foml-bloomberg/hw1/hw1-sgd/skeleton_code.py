@@ -70,13 +70,11 @@ def compute_square_loss(X, y, theta):
     """
     # loss = 0 #initialize the square_loss
 
-    # Which one is more effective? looks like the first one
+    # print('X: ' + str(X.shape) + ' y: ' + str(y.shape) + ' theta: ' + str(theta.shape))
     tmp = X.dot(theta) - y
     loss = tmp.T.dot(tmp) / X.shape[0]
-    # loss = (np.dot(theta.T, np.dot(X.T, np.dot(X, theta))) - 2 * np.dot(y.T, np.dot(X, theta)) + np.dot(y.T, y)) / float(X.shape[0])
 
     return loss
-
 
 ########################################
 ### compute the gradient of square loss function
@@ -151,7 +149,7 @@ def generic_gradient_checker(X, y, theta, objective_func, gradient_func, epsilon
 
 ####################################
 #### Batch Gradient Descent
-def batch_grad_descent(X, y, alpha=0.050, num_iter=1000, check_gradient=False):
+def batch_grad_descent(X, y, alpha=0.01, num_iter=1000, check_gradient=False):
     """
     In this question you will implement batch gradient descent to
     minimize the square loss objective
@@ -184,11 +182,13 @@ def batch_grad_descent(X, y, alpha=0.050, num_iter=1000, check_gradient=False):
         grad_hist[i] = np.linalg.norm(grad)
         theta = theta - alpha * grad
 
-    print(str(loss_hist))
-    plt.grid()
-    plt.plot(loss_hist)
-    plt.savefig('testfigure.png', dpi=100)
+    # print(str(loss_hist))
+    # plt.grid()
+    # plt.plot(loss_hist)
+    # plt.savefig('testfigure.png', dpi=100)
     # plt.show(block=True)
+
+    return grad_hist
 
 ####################################
 ###Q2.4b: Implement backtracking line search in batch_gradient_descent
@@ -212,11 +212,11 @@ def compute_regularized_square_loss_gradient(X, y, theta, lambda_reg):
     Returns:
         grad - gradient vector, 1D numpy array of size (num_features)
     """
-    #TODO
+    return (2 * X.T.dot(X.dot(theta) - y) / float(X.shape[0])) + 2 * lambda_reg * theta
 
 ###################################################
 ### Batch Gradient Descent with regularization term
-def regularized_grad_descent(X, y, alpha=0.1, lambda_reg=1, num_iter=1000):
+def regularized_grad_descent(X, y, alpha=0.01, lambda_reg=1, num_iter=1000):
     """
     Args:
         X - the feature vector, 2D numpy array of size (num_instances, num_features)
@@ -232,7 +232,25 @@ def regularized_grad_descent(X, y, alpha=0.1, lambda_reg=1, num_iter=1000):
     (num_instances, num_features) = X.shape
     theta = np.zeros(num_features) #Initialize theta
     theta_hist = np.zeros((num_iter+1, num_features))  #Initialize theta_hist
+    grad_hist = np.zeros(num_iter+1, dtype=float)
     loss_hist = np.zeros(num_iter+1) #Initialize loss_hist
+
+    for i in xrange(num_iter + 1):
+        print(str(theta))
+        # loss_hist[i] = compute_square_loss(X, y, theta)
+        theta_hist[i] = theta
+        # print('' + str(theta))
+        # print('' + str(compute_square_loss_gradient(X, y, theta)))
+        grad = compute_regularized_square_loss_gradient(X, y, theta, lambda_reg)
+        grad_hist[i] = np.linalg.norm(grad)
+        theta = theta - alpha * grad
+
+    # print(str(loss_hist))
+    # plt.grid()
+    # plt.plot(grad_hist)
+    # plt.savefig('regularized_grad_descent.png', dpi=100)
+
+    return grad_hist
 
 #############################################
 ## Visualization of Regularized Batch Gradient Descent
@@ -304,33 +322,55 @@ def main():
     X = df.values[:,:-1]
     y = df.values[:,-1]
 
-    # print('Split into Train and Test. Shape: ' + str(X.shape))
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=100, random_state=10)
-    print(str(X_train.shape))
-
-    # small data
-    #X_train = np.array(([1, 2, 3], [4, 5, 6]))
-    #X_test = np.array(([1, 2, 3], [4, 5, 6]))
-    #y_train = np.array([1, 1], dtype = float)
+    if True:
+        print('Split into Train and Test. Shape: ' + str(X.shape))
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=100, random_state=10)
+    else:
+        # small data
+        X_train = np.array((([1, 2, 3], [4, 5, 6])), dtype = float)
+        X_test = np.array(([1, 2, 3], [4, 5, 6]), dtype = float)
+        y_train = np.array([1, 1], dtype = float)
+        theta = np.array([1, -1, -1, 1], dtype = float)
 
     print("Scaling all to [0, 1]")
+    print('X shape: ' + str(X_train.shape) + ' y shape: ' + str(y_train.shape))
+
     X_train, X_test = feature_normalization(X_train, X_test)
     X_train = np.hstack((X_train, np.ones((X_train.shape[0], 1))))  # Add bias term
     X_test = np.hstack((X_test, np.ones((X_test.shape[0], 1)))) # Add bias term
 
     # hw1 2.2.5
-    # theta = np.array([1, -1, -1], dtype = float)
-    # res = compute_square_loss(X, y, theta)
-    # res = compute_square_loss(X, np.dot(X, theta), theta)
-    # print('compute_square_loss: ' + str(res))
+    # res_sl = compute_square_loss(X_train, y_train, theta)
+    # res_sl = compute_square_loss(X_train, np.dot(X_train, theta), theta)
+    # print('compute_square_loss: ' + str(res_sl))
 
     # hw1 2.2.6
-    # res = compute_square_loss_gradient(X, y, theta)
+    # res_grad = compute_square_loss_gradient(X_train, y_train, theta)
     # res = compute_square_loss_gradient(X, np.dot(X, theta), theta)
-    # print('compute_square_loss_gradient: ' + str(res))
+    # print('compute_square_loss_gradient: ' + str(res_grad))
     
-    batch_grad_descent(X_train, y_train)
+    # TODO: type on the HW page 3
+    # hw1 2.4.1
+    alpha = 0.04
+    grad_desc = batch_grad_descent(X_train, y_train, alpha=alpha)
 
+    # hw1 2.5.2
+    # res_rsl = compute_regularized_square_loss_gradient(X_train, y_train, theta, 0)
+    # print('compute_square_loss: ' + str(res_rsl))
+
+    # hw1 2.5.3
+    ridge_desc = regularized_grad_descent(X_train, y_train, alpha=alpha)
+
+
+    # some comparison
+    plt.grid()
+    plt.plot(grad_desc, label='Regression')
+    plt.plot(ridge_desc, label='Ridge regression')
+    plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
+           ncol=2, mode="expand", borderaxespad=0.)
+    plt.savefig('result.png', dpi=100)
+
+    # just plot
     # plot_data(X_train, y_train)
 
 if __name__ == "__main__":
