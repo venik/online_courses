@@ -188,14 +188,20 @@ def batch_grad_descent(X, y, alpha=0.01, num_iter=1000, check_gradient=False):
     # plt.savefig('testfigure.png', dpi=100)
     # plt.show(block=True)
 
-    return grad_hist
+    return loss_hist
 
 ####################################
 ###Q2.4b: Implement backtracking line search in batch_gradient_descent
 ###Check http://en.wikipedia.org/wiki/Backtracking_line_search for details
-#TODO
+# def backtracking_line_search(X, y, loss, gradient)
 
 
+def compute_regularized_square_loss(X, y, theta, lambda_reg):
+
+    tmp = X.dot(theta) - y
+    loss = tmp.T.dot(tmp) / X.shape[0] + lambda_reg * theta.T.dot(theta)
+
+    return loss
 
 ###################################################
 ### Compute the gradient of Regularized Batch Gradient Descent
@@ -233,11 +239,11 @@ def regularized_grad_descent(X, y, alpha=0.01, lambda_reg=1, num_iter=1000):
     theta = np.zeros(num_features) #Initialize theta
     theta_hist = np.zeros((num_iter+1, num_features))  #Initialize theta_hist
     grad_hist = np.zeros(num_iter+1, dtype=float)
-    loss_hist = np.zeros(num_iter+1) #Initialize loss_hist
+    loss_hist = np.zeros(num_iter+1, dtype=float) #Initialize loss_hist
 
     for i in xrange(num_iter + 1):
         print(str(theta))
-        # loss_hist[i] = compute_square_loss(X, y, theta)
+        loss_hist[i] = compute_regularized_square_loss(X, y, theta=theta, lambda_reg=lambda_reg)
         theta_hist[i] = theta
         # print('' + str(theta))
         # print('' + str(compute_square_loss_gradient(X, y, theta)))
@@ -250,7 +256,7 @@ def regularized_grad_descent(X, y, alpha=0.01, lambda_reg=1, num_iter=1000):
     # plt.plot(grad_hist)
     # plt.savefig('regularized_grad_descent.png', dpi=100)
 
-    return grad_hist
+    return loss_hist
 
 #############################################
 ## Visualization of Regularized Batch Gradient Descent
@@ -314,6 +320,19 @@ def plot_data(X, y):
 ##X-axis: Step number (for gradient descent) or Epoch (for SGD)
 ##Y-axis: log(objective_function_value) and/or objective_function_value
 
+def regularized_grad_descent_study(X, y):
+    lambdas = [np.power(10, float(-7)), np.power(10, float(-5)), np.power(10, float(-3)), np.power(10, float(-1)), 1, 10]
+    lambda_size = len(lambdas)
+
+    plt.grid()
+
+    for i in range(lambda_size):
+        loss_hist = regularized_grad_descent(X, y, alpha=.01, lambda_reg=lambdas[i])
+        plt.plot(np.log(loss_hist), label=str(lambdas[i]))
+
+    plt.legend(loc='right', ncol=2, mode="expand", shadow=True, fancybox=True)
+    plt.savefig('regurized_study.png', dpi=100)
+
 def main():
     #Loading the dataset
     print('loading the dataset')
@@ -351,24 +370,26 @@ def main():
     
     # TODO: type on the HW page 3
     # hw1 2.4.1
-    alpha = 0.04
-    grad_desc = batch_grad_descent(X_train, y_train, alpha=alpha)
+    # alpha = 0.04
+    # grad_desc = batch_grad_descent(X_train, y_train, alpha=alpha)
 
     # hw1 2.5.2
     # res_rsl = compute_regularized_square_loss_gradient(X_train, y_train, theta, 0)
     # print('compute_square_loss: ' + str(res_rsl))
 
     # hw1 2.5.3
-    ridge_desc = regularized_grad_descent(X_train, y_train, alpha=alpha)
+    # ridge_desc = regularized_grad_descent(X_train, y_train, alpha=alpha, lambda_reg=2)
 
+    # hw1 2.5.7
+    regularized_grad_descent_study(X_train, y_train)
 
     # some comparison
-    plt.grid()
-    plt.plot(grad_desc, label='Regression')
-    plt.plot(ridge_desc, label='Ridge regression')
-    plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
-           ncol=2, mode="expand", borderaxespad=0.)
-    plt.savefig('result.png', dpi=100)
+    # plt.grid()
+    # plt.plot(np.log(grad_desc), label='Regression')
+    # plt.plot(np.log(ridge_desc), label='Ridge regression')
+    # plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
+    #        ncol=2, mode="expand", borderaxespad=0.)
+    # plt.savefig('result.png', dpi=100)
 
     # just plot
     # plot_data(X_train, y_train)
