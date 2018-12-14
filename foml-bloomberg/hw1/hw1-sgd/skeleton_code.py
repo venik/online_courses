@@ -197,10 +197,8 @@ def batch_grad_descent(X, y, alpha=0.01, num_iter=1000, check_gradient=False):
 
 
 def compute_regularized_square_loss(X, y, theta, lambda_reg):
-
     tmp = X.dot(theta) - y
     loss = tmp.T.dot(tmp) / X.shape[0] + lambda_reg * theta.T.dot(theta)
-
     return loss
 
 ###################################################
@@ -287,10 +285,36 @@ def stochastic_grad_descent(X, y, alpha=0.1, lambda_reg=1, num_iter=1000):
     num_instances, num_features = X.shape[0], X.shape[1]
     theta = np.ones(num_features) #Initialize theta
 
-
     theta_hist = np.zeros((num_iter, num_instances, num_features))  #Initialize theta_hist
-    loss_hist = np.zeros((num_iter, num_instances)) #Initialize loss_hist
-    #TODO
+    loss_hist = np.zeros(num_iter+1, dtype=float) #Initialize loss_hist
+    grad_hist = np.zeros(num_iter+1, dtype=float)
+
+    # print(str(theta))
+    # print(str(X))
+    # print(str(y))
+    y_tmp = y
+    batch = np.append(X, np.reshape(y, (X.shape[0], 1)), axis=1)
+    np.random.shuffle(batch)
+    print(str(batch))
+    for epoch in range(num_iter):
+        for i in range(batch.shape[0]):
+            X_item = np.reshape(batch[i, :-1], (1, batch.shape[1] - 1))
+            y_item = np.reshape(batch[i, -1], (1, 1))
+
+            grad = X_item * (X_item.dot(theta.T) - y_item) #+ 0 * lambda_reg * theta.dot(theta.T)
+            # print('grad:' + str(grad.shape))
+
+            theta = theta - alpha * grad
+
+        print(str(X.shape))
+        print(str(theta.shape))
+
+        # tmp = X.dot(theta) - y
+        # loss = tmp.T.dot(tmp) / X.shape[0]
+        loss_hist[epoch] = np.power(X.dot(theta) - y, 2) #+ lambda_reg * theta.dot(theta.T)
+        grad_hist[epoch] = np.linalg.norm(grad)
+
+    return loss_hist
 
 def plot_data(X, y):
     cov_mat = np.cov(X.T)
@@ -381,7 +405,7 @@ def main():
     # ridge_desc = regularized_grad_descent(X_train, y_train, alpha=alpha, lambda_reg=2)
 
     # hw1 2.5.7
-    regularized_grad_descent_study(X_train, y_train)
+    # regularized_grad_descent_study(X_train, y_train)
 
     # some comparison
     # plt.grid()
@@ -393,6 +417,12 @@ def main():
 
     # just plot
     # plot_data(X_train, y_train)
+
+    # hw 2.6
+    stochastic_desc = stochastic_grad_descent(X_train, y_train, alpha=0.001, lambda_reg=1, num_iter=1000)
+    # plt.grid()
+    # plt.plot(np.log(stochastic_desc), label='Stochastic descent')
+    # plt.savefig('stochastic.png', dpi=100)
 
 if __name__ == "__main__":
     main()
