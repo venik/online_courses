@@ -71,7 +71,7 @@ def compute_square_loss(X, y, theta):
     # loss = 0 #initialize the square_loss
 
     # print('X: ' + str(X.shape) + ' y: ' + str(y.shape) + ' theta: ' + str(theta.shape))
-    tmp = X.dot(theta) - y
+    tmp = X.dot(theta) - y.reshape(X.shape[0], 1)
     loss = tmp.T.dot(tmp) / X.shape[0]
 
     return loss
@@ -283,36 +283,35 @@ def stochastic_grad_descent(X, y, alpha=0.1, lambda_reg=1, num_iter=1000):
         loss hist - the history of regularized loss function vector, 2D numpy array of size(num_iter, num_instances)
     """
     num_instances, num_features = X.shape[0], X.shape[1]
-    theta = np.ones(num_features) #Initialize theta
+    theta = np.ones((num_features, 1)) #Initialize theta
 
     theta_hist = np.zeros((num_iter, num_instances, num_features))  #Initialize theta_hist
-    loss_hist = np.zeros(num_iter+1, dtype=float) #Initialize loss_hist
-    grad_hist = np.zeros(num_iter+1, dtype=float)
+    loss_hist = np.zeros(num_iter * X.shape[0], dtype=float) #Initialize loss_hist
+    grad_hist = np.zeros(num_iter, dtype=float)
 
-    # print(str(theta))
+    # print('theta:' + str(theta))
     # print(str(X))
     # print(str(y))
-    y_tmp = y
-    batch = np.append(X, np.reshape(y, (X.shape[0], 1)), axis=1)
-    np.random.shuffle(batch)
-    print(str(batch))
+    # print(str(batch))
     for epoch in range(num_iter):
-        for i in range(batch.shape[0]):
-            X_item = np.reshape(batch[i, :-1], (1, batch.shape[1] - 1))
-            y_item = np.reshape(batch[i, -1], (1, 1))
+        idx = range(X.shape[0])
+        np.random.shuffle(idx)
+        # alpha = 1.0 / (epoch + 1)
+        # print('idx:' + str(idx)) 
+        for i in range(len(idx)):
+            loss_hist[epoch * num_iter + i] = compute_square_loss(X, y, theta)
 
-            grad = X_item * (X_item.dot(theta.T) - y_item) #+ 0 * lambda_reg * theta.dot(theta.T)
-            # print('grad:' + str(grad.shape))
+            X_item = X[i, :]
+            y_item = y[i]
+            # print(str(i))
+            # print(str(X_item))
+            # print(str(y_item))
 
-            theta = theta - alpha * grad
+            grad = X_item * (X_item.dot(theta) - y_item) #+ 0 * lambda_reg * theta.dot(theta.T)
+            # print('grad:' + str(grad))
 
-        print(str(X.shape))
-        print(str(theta.shape))
-
-        # tmp = X.dot(theta) - y
-        # loss = tmp.T.dot(tmp) / X.shape[0]
-        loss_hist[epoch] = np.power(X.dot(theta) - y, 2) #+ lambda_reg * theta.dot(theta.T)
-        grad_hist[epoch] = np.linalg.norm(grad)
+            theta = theta - alpha * grad.reshape(X.shape[1], 1)
+            # print('theta:' + str(theta))
 
     return loss_hist
 
@@ -419,10 +418,10 @@ def main():
     # plot_data(X_train, y_train)
 
     # hw 2.6
-    stochastic_desc = stochastic_grad_descent(X_train, y_train, alpha=0.001, lambda_reg=1, num_iter=1000)
-    # plt.grid()
-    # plt.plot(np.log(stochastic_desc), label='Stochastic descent')
-    # plt.savefig('stochastic.png', dpi=100)
+    stochastic_desc = stochastic_grad_descent(X_train, y_train, alpha=0.05, lambda_reg=0, num_iter=10)
+    plt.grid()
+    plt.plot(stochastic_desc[0:200], label='Stochastic descent')
+    plt.savefig('stochastic.png', dpi=100)
 
 if __name__ == "__main__":
     main()
