@@ -216,7 +216,7 @@ def compute_regularized_square_loss_gradient(X, y, theta, lambda_reg):
     Returns:
         grad - gradient vector, 1D numpy array of size (num_features)
     """
-    return (2 * X.T.dot(X.dot(theta) - y) / float(X.shape[0])) + 2 * lambda_reg * theta
+    return (2 * X.T.dot(X.dot(theta) - y.reshape(X.shape[0], 1)) / float(X.shape[0])) + 2 * lambda_reg * theta
 
 ###################################################
 ### Batch Gradient Descent with regularization term
@@ -234,19 +234,18 @@ def regularized_grad_descent(X, y, alpha=0.01, lambda_reg=1, num_iter=1000):
         loss_hist - the history of loss function without the regularization term, 1D numpy array.
     """
     (num_instances, num_features) = X.shape
-    theta = np.zeros(num_features) #Initialize theta
+    theta_start = theta = np.zeros((num_features, 1), dtype=float) #Initialize theta
     theta_hist = np.zeros((num_iter+1, num_features))  #Initialize theta_hist
-    grad_hist = np.zeros(num_iter+1, dtype=float)
     loss_hist = np.zeros(num_iter+1, dtype=float) #Initialize loss_hist
 
     for i in xrange(num_iter + 1):
-        print(str(theta))
         loss_hist[i] = compute_regularized_square_loss(X, y, theta=theta, lambda_reg=lambda_reg)
-        theta_hist[i] = theta
+        # theta_hist[i] = theta
         # print('' + str(theta))
         # print('' + str(compute_square_loss_gradient(X, y, theta)))
         grad = compute_regularized_square_loss_gradient(X, y, theta, lambda_reg)
-        grad_hist[i] = np.linalg.norm(grad)
+        # print('grad:' + str(grad.shape))
+
         theta = theta - alpha * grad
 
     # print(str(loss_hist))
@@ -254,7 +253,7 @@ def regularized_grad_descent(X, y, alpha=0.01, lambda_reg=1, num_iter=1000):
     # plt.plot(grad_hist)
     # plt.savefig('regularized_grad_descent.png', dpi=100)
 
-    return loss_hist
+    return loss_hist, theta_start, theta
 
 #############################################
 ## Visualization of Regularized Batch Gradient Descent
@@ -283,18 +282,18 @@ def stochastic_grad_descent(X, y, alpha=0.1, lambda_reg=1, num_iter=1000):
         loss hist - the history of regularized loss function vector, 2D numpy array of size(num_iter, num_instances)
     """
     num_instances, num_features = X.shape[0], X.shape[1]
-    theta_first = theta = np.ones((num_features, 1), dtype=float) #initialize theta
+    theta_first = theta = np.zeros((num_features, 1), dtype=float) #initialize theta
 
     theta_hist = np.zeros((num_iter, num_instances, num_features))  #Initialize theta_hist
     loss_hist = np.zeros(num_iter * X.shape[0], dtype=float) #Initialize loss_hist
     grad_hist = np.zeros(num_iter, dtype=float)
 
-    print('theta:' + str(theta))
+    # print('theta:' + str(theta))
     # print(str(X))
     # print(str(y))
     # print(str(batch))
+    idx = range(X.shape[0])
     for epoch in range(num_iter):
-        idx = range(X.shape[0])
         np.random.shuffle(idx)
         if epoch >= 2:
             alpha = alpha / float(epoch)
@@ -394,7 +393,8 @@ def main():
     
     # TODO: type on the HW page 3
     # hw1 2.4.1
-    # alpha = 0.04
+    alpha = 0.04
+    lambda_reg = 1
     # grad_desc = batch_grad_descent(X_train, y_train, alpha=alpha)
 
     # hw1 2.5.2
@@ -402,7 +402,9 @@ def main():
     # print('compute_square_loss: ' + str(res_rsl))
 
     # hw1 2.5.3
-    # ridge_desc = regularized_grad_descent(X_train, y_train, alpha=alpha, lambda_reg=2)
+    ridge_desc, theta_start_gd, theta_finish_gd = regularized_grad_descent(X_train, y_train, alpha=alpha, lambda_reg=lambda_reg)
+    print('GD: test cost start: ' + str(compute_regularized_square_loss(X_test, y_test, theta_start_gd, lambda_reg)))
+    print('GD: test const final: ' + str(compute_regularized_square_loss(X_test, y_test, theta_finish_gd, lambda_reg)))
 
     # hw1 2.5.7
     # regularized_grad_descent_study(X_train, y_train)
@@ -419,12 +421,11 @@ def main():
     # plot_data(X_train, y_train)
 
     # hw 2.6
-    lambda_reg = 1
-    stochastic_desc, theta_first, theta_final = stochastic_grad_descent(X_train, y_train, alpha=0.07, lambda_reg=lambda_reg, num_iter=15)
+    stochastic_desc, theta_first, theta_final = stochastic_grad_descent(X_train, y_train, alpha=alpha, lambda_reg=lambda_reg, num_iter=15)
     plt.grid()
     plt.plot(np.log(stochastic_desc), label='Stochastic descent')
     plt.savefig('stochastic.png', dpi=100)
-    print('test start: ' + str(compute_regularized_square_loss(X_test, y_test, theta_first, lambda_reg)))
-    print('test final: ' + str(compute_regularized_square_loss(X_test, y_test, theta_final, lambda_reg)))
+    print('SGD: test cost start: ' + str(compute_regularized_square_loss(X_test, y_test, theta_first, lambda_reg)))
+    print('SGD: test const final: ' + str(compute_regularized_square_loss(X_test, y_test, theta_final, lambda_reg)))
 if __name__ == "__main__":
     main()
