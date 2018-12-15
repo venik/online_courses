@@ -283,19 +283,23 @@ def stochastic_grad_descent(X, y, alpha=0.1, lambda_reg=1, num_iter=1000):
         loss hist - the history of regularized loss function vector, 2D numpy array of size(num_iter, num_instances)
     """
     num_instances, num_features = X.shape[0], X.shape[1]
-    theta = np.ones((num_features, 1)) #Initialize theta
+    theta_first = theta = np.ones((num_features, 1), dtype=float) #initialize theta
 
     theta_hist = np.zeros((num_iter, num_instances, num_features))  #Initialize theta_hist
     loss_hist = np.zeros(num_iter * X.shape[0], dtype=float) #Initialize loss_hist
     grad_hist = np.zeros(num_iter, dtype=float)
 
-    # print('theta:' + str(theta))
+    print('theta:' + str(theta))
     # print(str(X))
     # print(str(y))
     # print(str(batch))
     for epoch in range(num_iter):
         idx = range(X.shape[0])
         np.random.shuffle(idx)
+        # if epoch < 2:
+        #     alpha = 0.05
+        # else:
+        #     alpha = alpha / float(epoch)
         # alpha = 1.0 / (epoch + 1)
         # print('idx:' + str(idx)) 
         for i in range(len(idx)):
@@ -307,13 +311,13 @@ def stochastic_grad_descent(X, y, alpha=0.1, lambda_reg=1, num_iter=1000):
             # print(str(X_item))
             # print(str(y_item))
 
-            grad = X_item * (X_item.dot(theta) - y_item) #+ 0 * lambda_reg * theta.dot(theta.T)
+            grad = X_item * (X_item.dot(theta) - y_item) + lambda_reg * theta.T.dot(theta)
             # print('grad:' + str(grad))
 
             theta = theta - alpha * grad.reshape(X.shape[1], 1)
             # print('theta:' + str(theta))
 
-    return loss_hist
+    return loss_hist, theta_first, theta
 
 def plot_data(X, y):
     cov_mat = np.cov(X.T)
@@ -418,10 +422,11 @@ def main():
     # plot_data(X_train, y_train)
 
     # hw 2.6
-    stochastic_desc = stochastic_grad_descent(X_train, y_train, alpha=0.05, lambda_reg=0, num_iter=10)
+    stochastic_desc, theta_first, theta_final = stochastic_grad_descent(X_train, y_train, alpha=0.01, lambda_reg=0, num_iter=10)
     plt.grid()
-    plt.plot(stochastic_desc[0:200], label='Stochastic descent')
+    plt.plot(np.log(stochastic_desc), label='Stochastic descent')
     plt.savefig('stochastic.png', dpi=100)
-
+    print('test start: ' + str(compute_square_loss(X_test, y_test, theta_first)))
+    print('test final: ' + str(compute_square_loss(X_test, y_test, theta_final)))
 if __name__ == "__main__":
     main()
