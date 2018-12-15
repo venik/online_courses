@@ -197,7 +197,7 @@ def batch_grad_descent(X, y, alpha=0.01, num_iter=1000, check_gradient=False):
 
 
 def compute_regularized_square_loss(X, y, theta, lambda_reg):
-    tmp = X.dot(theta) - y
+    tmp = X.dot(theta) - y.reshape(X.shape[0], 1)
     loss = tmp.T.dot(tmp) / X.shape[0] + lambda_reg * theta.T.dot(theta)
     return loss
 
@@ -296,14 +296,11 @@ def stochastic_grad_descent(X, y, alpha=0.1, lambda_reg=1, num_iter=1000):
     for epoch in range(num_iter):
         idx = range(X.shape[0])
         np.random.shuffle(idx)
-        # if epoch < 2:
-        #     alpha = 0.05
-        # else:
-        #     alpha = alpha / float(epoch)
-        # alpha = 1.0 / (epoch + 1)
+        if epoch >= 2:
+            alpha = alpha / float(epoch)
         # print('idx:' + str(idx)) 
         for i in range(len(idx)):
-            loss_hist[epoch * num_iter + i] = compute_square_loss(X, y, theta)
+            loss_hist[epoch * num_iter + i] = compute_regularized_square_loss(X, y, theta, lambda_reg)
 
             X_item = X[i, :]
             y_item = y[i]
@@ -311,8 +308,8 @@ def stochastic_grad_descent(X, y, alpha=0.1, lambda_reg=1, num_iter=1000):
             # print(str(X_item))
             # print(str(y_item))
 
-            grad = X_item * (X_item.dot(theta) - y_item) + lambda_reg * theta.T.dot(theta)
-            # print('grad:' + str(grad))
+            grad = X_item.reshape(X.shape[1], 1) * (X_item.dot(theta) - y_item) + 2 * lambda_reg * theta
+            # print('grad:' + str(theta.shape))
 
             theta = theta - alpha * grad.reshape(X.shape[1], 1)
             # print('theta:' + str(theta))
@@ -422,11 +419,12 @@ def main():
     # plot_data(X_train, y_train)
 
     # hw 2.6
-    stochastic_desc, theta_first, theta_final = stochastic_grad_descent(X_train, y_train, alpha=0.01, lambda_reg=0, num_iter=10)
+    lambda_reg = 1
+    stochastic_desc, theta_first, theta_final = stochastic_grad_descent(X_train, y_train, alpha=0.07, lambda_reg=lambda_reg, num_iter=15)
     plt.grid()
     plt.plot(np.log(stochastic_desc), label='Stochastic descent')
     plt.savefig('stochastic.png', dpi=100)
-    print('test start: ' + str(compute_square_loss(X_test, y_test, theta_first)))
-    print('test final: ' + str(compute_square_loss(X_test, y_test, theta_final)))
+    print('test start: ' + str(compute_regularized_square_loss(X_test, y_test, theta_first, lambda_reg)))
+    print('test final: ' + str(compute_regularized_square_loss(X_test, y_test, theta_final, lambda_reg)))
 if __name__ == "__main__":
     main()
