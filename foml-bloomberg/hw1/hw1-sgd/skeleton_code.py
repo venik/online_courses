@@ -7,6 +7,9 @@ if (sys.platform.startswith('linux')):
     mpl.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
+import time
+
+np.random.seed(int(time.time()))
 
 ### Assignment Owner: Alex Nikiforov
 
@@ -234,7 +237,9 @@ def regularized_grad_descent(X, y, alpha=0.01, lambda_reg=1, num_iter=1000):
         loss_hist - the history of loss function without the regularization term, 1D numpy array.
     """
     (num_instances, num_features) = X.shape
-    theta_start = theta = np.zeros((num_features, 1), dtype=float) #Initialize theta
+    # theta_start = theta = np.zeros((num_features, 1), dtype=float) #Initialize theta
+    theta_start = theta = np.random.rand(num_features, 1)
+
     theta_hist = np.zeros((num_iter+1, num_features))  #Initialize theta_hist
     loss_hist = np.zeros(num_iter+1, dtype=float) #Initialize loss_hist
 
@@ -282,7 +287,8 @@ def stochastic_grad_descent(X, y, alpha=0.1, lambda_reg=1, num_iter=1000):
         loss hist - the history of regularized loss function vector, 2D numpy array of size(num_iter, num_instances)
     """
     num_instances, num_features = X.shape[0], X.shape[1]
-    theta_first = theta = np.zeros((num_features, 1), dtype=float) #initialize theta
+    # theta_first = theta = np.zeros((num_features, 1), dtype=float) #initialize theta
+    theta_first = theta = np.random.rand(num_features, 1)
 
     theta_hist = np.zeros((num_iter, num_instances, num_features))  #Initialize theta_hist
     loss_hist = np.zeros(num_iter * X.shape[0], dtype=float) #Initialize loss_hist
@@ -292,8 +298,8 @@ def stochastic_grad_descent(X, y, alpha=0.1, lambda_reg=1, num_iter=1000):
     # print(str(X))
     # print(str(y))
     # print(str(batch))
-    idx = range(X.shape[0])
     for epoch in range(num_iter):
+        idx = range(X.shape[0])
         np.random.shuffle(idx)
         if epoch >= 2:
             alpha = alpha / float(epoch)
@@ -303,7 +309,7 @@ def stochastic_grad_descent(X, y, alpha=0.1, lambda_reg=1, num_iter=1000):
 
             X_item = X[i, :]
             y_item = y[i]
-            # print(str(i))
+            #print('epoch: ' + str(epoch) + ' iter: ' + str(i) + ' alpha: ' + str(alpha) + ' loss: ' + str(loss_hist[epoch * num_iter + i]))
             # print(str(X_item))
             # print(str(y_item))
 
@@ -423,7 +429,7 @@ def main():
     # hw 2.6
     stochastic_desc, theta_first, theta_final = stochastic_grad_descent(X_train, y_train, alpha=alpha, lambda_reg=lambda_reg, num_iter=15)
     plt.grid()
-    plt.plot(np.log(stochastic_desc), label='Stochastic descent')
+    plt.plot(range(stochastic_desc.shape[0]), stochastic_desc, label='Stochastic descent')
     plt.savefig('stochastic.png', dpi=100)
     print('SGD: test cost start: ' + str(compute_regularized_square_loss(X_test, y_test, theta_first, lambda_reg)))
     print('SGD: test const final: ' + str(compute_regularized_square_loss(X_test, y_test, theta_final, lambda_reg)))
