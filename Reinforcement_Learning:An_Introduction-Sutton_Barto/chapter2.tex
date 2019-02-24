@@ -1,0 +1,20 @@
+\documentclass{article}
+\usepackage[margin=0.5in]{geometry}
+\begin{document}
+\textit{Excercise 2.1} Probability that the greedy action was selected ${P(greedy) = 1 - \epsilon = 0.5}$
+
+\textit{Excersize 2.2}
+
+\begin{center}
+\begin{tabular}{ l | c | c | c | c | r }
+  t/R for arm & 1 & 2 & 3 & 4 & ${\epsilon}$ - case\\ \hline
+      1       & 1 &   &   &   & definetly \\
+      2       &   & 1 &   &   & definetly \\
+      3       &   & 2 &   &   & possibly \\
+      4       &   & 2 &   &   & possibly \\
+      5       &   &   & 0 &   & definetly 
+\end{tabular}
+\end{center}
+
+\textit{Excersize 2.2} The probability to take the optimal action is ${P = 1 - \epsilon}$, so on the long run ${\epsilon = 0.01}$ will perform better than ${\epsilon = 0.1}$ with probabilities to take the optimal action ${P=0.99}$ and ${P=0.9}$
+\end{document}
