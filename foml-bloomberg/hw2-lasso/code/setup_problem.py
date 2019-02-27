@@ -33,6 +33,8 @@ def get_target_and_featurizer(num_basis_fns = 100, num_nonzero = 10, coefs_true=
     # target_fn and featurize.
     # Construct basis, to be used for generating target function
 
+    print('=>' + str(coefs_true.shape) + ' non zero:' + str(np.nonzero(coefs_true)))
+
     if coefs_true is not None:
         num_basis_fns = len(coefs_true)
     else:
