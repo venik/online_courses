@@ -56,47 +56,88 @@ def main():
     print('Featurized shape: ' + str(X_train[0].shape))
 
     # Visualize data
-    plt.subplot(2, 1, 1)
+    plt.subplot(4, 1, 1)
+    plt.subplots_adjust(hspace=0.5)
+
     legend = []
     l2reg_range = np.concatenate((
         np.linspace(0, 1, 8, endpoint=False),
         np.linspace(1, 5, 4)
     ))
+
+    best_score = np.finfo(np.float32).max
+    best_weights = np.zeros(X_train[0].shape[0])
+    best_estimator = None
+    base_weights = np.zeros(X_train[0].shape[0])
+
+    best_l2reg = 0
     l2reg_costs = []
     x_plot = np.linspace(0, 1, 1000)
-    should_plot = True
     for l2reg in l2reg_range:
         ridge_regression_estimator = MyRidge(l2reg=l2reg)
         ridge_regression_estimator.fit(X_train, y_train)
 
-        if should_plot:
+        if l2reg == 0:
             y_plot = ridge_regression_estimator.predict(featurize(x_plot))
+            base_weights = ridge_regression_estimator.w_
             plt.plot(x_plot, y_plot)
             legend.append('l2reg {:.4}'.format(l2reg))
 
-        should_plot = not should_plot
         score = ridge_regression_estimator.score(X_val, y_val)
-        score_train = ridge_regression_estimator.score(X_train, y_train)
         l2reg_costs.append(score)
+
+        score_train = ridge_regression_estimator.score(X_train, y_train)
+        if best_score > score:
+            best_score = score
+            best_weights = ridge_regression_estimator.w_
+            best_l2reg = l2reg
+            best_estimator = ridge_regression_estimator
+
         print('l2reg: {:.2f} validation score: {:.4f} train score: {:.4f}'.format(l2reg, score, score_train))
 
-    plt.scatter(x_train, y_train, marker='^', c='g')
+
+    legend.append('Best estimation')
+    plt.plot(x_plot, best_estimator.predict(featurize(x_plot)), '-r')
+
+    legend.append('Bayes estimation')
+    plt.plot(x_plot, target_fn(x_plot), '-c')
+
     legend.append('data')
+    plt.scatter(x_train, y_train, marker='^', c='g')
 
     plt.legend(legend)
     plt.title('Ridge regression')
     plt.grid()
 
+    # print('=>' + str(len(legend)))
+
     # Visualize cost vs l2reg
-    plt.subplot(2, 1, 2)
+    plt.subplot(4, 1, 2)
     plt.title('Ridge regression cost')
     plt.grid()
     plt.plot(l2reg_range, l2reg_costs, '-rx')
 
-    plt.show()
+    # Visualize weights
+    plt.subplot(4, 1, 3)
+    plt.grid()
+    plt.title('Weights without regularization')
+    plt.bar(range(X_train[0].shape[0]), base_weights)
 
-    id = np.argmin(l2reg_costs)
-    print('Best performance with l2reg: {:.4f} score: {:.4f}'.format(l2reg_range[id], l2reg_costs[id]))
+    plt.subplot(4, 1, 4)
+    plt.grid()
+    plt.title('Best regularized weights')
+    plt.bar(range(X_train[0].shape[0]), best_weights)
+
+
+    print('Best performance with l2reg: {:.4f} score: {:.4f}'.format(best_l2reg, best_score))
+
+    tmp = best_estimator.w_
+    idx = tmp < 1e-6
+    tmp[idx] = 0
+
+    print(str(tmp))
+
+    plt.show()
 
 if __name__ == '__main__':
   main()
