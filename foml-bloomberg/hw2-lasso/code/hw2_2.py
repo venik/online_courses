@@ -56,7 +56,9 @@ def main():
     print('Featurized shape: ' + str(X_train[0].shape))
 
     # Visualize data
-    plt.subplot(4, 1, 1)
+    f1 = plt.figure(1)
+
+    plt.subplot(2, 1, 1)
     plt.subplots_adjust(hspace=0.5)
 
     legend = []
@@ -95,8 +97,7 @@ def main():
 
         print('l2reg: {:.2f} validation score: {:.4f} train score: {:.4f}'.format(l2reg, score, score_train))
 
-
-    legend.append('Best estimation')
+    legend.append('Best ridge estimation')
     plt.plot(x_plot, best_estimator.predict(featurize(x_plot)), '-r')
 
     legend.append('Bayes estimation')
@@ -112,22 +113,29 @@ def main():
     # print('=>' + str(len(legend)))
 
     # Visualize cost vs l2reg
-    plt.subplot(4, 1, 2)
+    plt.subplot(2, 1, 2)
     plt.title('Ridge regression cost')
     plt.grid()
     plt.plot(l2reg_range, l2reg_costs, '-rx')
 
     # Visualize weights
-    plt.subplot(4, 1, 3)
+    f2 = plt.figure(2)
+    plt.subplots_adjust(hspace=0.5)
+
+    plt.subplot(3, 1, 1)
     plt.grid()
     plt.title('Weights without regularization')
     plt.bar(range(X_train[0].shape[0]), base_weights)
 
-    plt.subplot(4, 1, 4)
+    plt.subplot(3, 1, 2)
     plt.grid()
     plt.title('Best regularized weights')
     plt.bar(range(X_train[0].shape[0]), best_weights)
 
+    plt.subplot(3, 1, 3)
+    plt.grid()
+    plt.title('Bayes regularized weights')
+    plt.bar(range(X_train[0].shape[0]), coefs_true)
 
     print('Best performance with l2reg: {:.4f} score: {:.4f}'.format(best_l2reg, best_score))
 
