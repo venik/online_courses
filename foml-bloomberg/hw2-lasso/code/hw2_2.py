@@ -52,19 +52,52 @@ def main():
     X_train = featurize(x_train)
     X_val = featurize(x_val)
 
-    print('Original: ' + str(x_train[0]) + ' Featurized: ' + str(X_train[0]))
+    # print('Original: ' + str(x_train[0]) + ' Featurized: ' + str(X_train[0]))
     print('Featurized shape: ' + str(X_train[0].shape))
 
-    ridge_regression_estimator = MyRidge(l2reg=20)
-    ridge_regression_estimator.fit(X_train, y_train)
-
-    plt.scatter(x_train, y_train)
+    # Visualize data
+    plt.subplot(2, 1, 1)
+    legend = []
+    l2reg_range = np.concatenate((
+        np.linspace(0, 1, 8, endpoint=False),
+        np.linspace(1, 5, 4)
+    ))
+    l2reg_costs = []
     x_plot = np.linspace(0, 1, 1000)
-    y_plot = ridge_regression_estimator.predict(featurize(x_plot))
-    plt.plot(x_plot, y_plot, 'red')
+    should_plot = True
+    for l2reg in l2reg_range:
+        ridge_regression_estimator = MyRidge(l2reg=l2reg)
+        ridge_regression_estimator.fit(X_train, y_train)
 
+        if should_plot:
+            y_plot = ridge_regression_estimator.predict(featurize(x_plot))
+            plt.plot(x_plot, y_plot)
+            legend.append('l2reg {:.4}'.format(l2reg))
+
+        should_plot = not should_plot
+        score = ridge_regression_estimator.score(X_val, y_val)
+        score_train = ridge_regression_estimator.score(X_train, y_train)
+        l2reg_costs.append(score)
+        print('l2reg: {:.2f} validation score: {:.4f} train score: {:.4f}'.format(l2reg, score, score_train))
+
+    plt.scatter(x_train, y_train, marker='^', c='g')
+    legend.append('data')
+
+    plt.legend(legend)
+    plt.title('Ridge regression')
     plt.grid()
+
+    # Visualize cost vs l2reg
+    plt.subplot(2, 1, 2)
+    plt.title('Ridge regression cost')
+    plt.grid()
+    plt.plot(l2reg_range, l2reg_costs, '-rx')
+
     plt.show()
+
+    id = np.argmin(l2reg_costs)
+    print('Best performance with l2reg: {:.4f} score: {:.4f}'.format(l2reg_range[id], l2reg_costs[id]))
 
 if __name__ == '__main__':
   main()
+

@@ -15,6 +15,7 @@ import pickle
 def step_fn_generator(stepLoc=0):
     def f(x):
         ret = np.zeros(len(x))
+        # print('stepLoc: {:.4f}'.format(stepLoc))
         ret[x >= stepLoc] = 1
         return ret
     return f
