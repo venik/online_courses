@@ -1,5 +1,7 @@
 # attempt to do
 # https://davidrosenberg.github.io/mlcourse/Archive/2018/Homework/hw2.pdf
+# Example from the book
+# https://github.com/probml/pmtksupport/blob/master/markSchmidt-9march2011/markSchmidt/lasso/LassoShooting.m
 
 import numpy as np
 

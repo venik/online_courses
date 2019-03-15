@@ -10,33 +10,34 @@ def main():
     X_val = featurize(x_val)
 
     n, num_bfs = X_train.shape
-    lmbd = 1
+    lmbd = 0.00001
 
     w = np.linalg.inv(X_train.T.dot(X_train) + lmbd * np.eye(num_bfs)).dot(X_train.T.dot(y_train))
+    old_w = np.copy(w)
 
     print('x_train shape: ' + str(x_train.shape))
     print('y_train shape: ' + str(y_train.shape))
     print('X_train shape: ' + str(X_train.shape))
     print('w shape: ' + str(w.shape))
 
+    lmbd = 1
     XX2 = X_train.T.dot(X_train) * 2
 
-    for j in range(X_train.shape[1]):
-        cj = 0
-        aj = 0
-        for i in range(X_train.shape[0]):
-            aj += X_train[i, j] ** 2
-            cj += X_train[i, j] * (y_train[i] - w.T.dot(X_train[i, :]) + w[j] * X_train[i, [j]])
+    for k in range(10):
+        for j in range(X_train.shape[1]):
+            aj = XX2[j, j]
+            cj = 2 * X_train[:, [j]].T.dot(y_train - X_train.dot(w) + w[j] * X_train[:, j])
+            positive_part = np.sign(cj) * (np.abs(cj) - lmbd) if np.abs(cj) - lmbd > 0 else 0
+            # print('\tbefore j: {:} w[j]: {:}'.format(j, w[j]))
+            # print('\t => aj: {:} cj: {:} positive: {:} diff: {:}'.format(aj, cj, positive_part, (np.abs(cj) - lmbd)))
+            w[j] = 0 if aj == 0 and cj == 0 else positive_part / aj
+            # print('\tafter j: {:} w[j]: {:}'.format(j, w[j]))
 
-        aj *= 2
-        cj *= 2
-        print('aj: ' + str(XX2[j, j]))
-        print('cj:' + str(cj))
+        diff = np.sum(np.abs(old_w - w))
+        print("k: {:} diff: {:.2f}".format(k, diff))
 
-        aj_tmp = XX2[j, j]
-        cj_tmp = 2 * X_train[:, [j]].T.dot(y_train - X_train.dot(w) + w[j] * X_train[:, j])
-        print('aj_tmp: ' + str(aj_tmp))
-        print('cj_tmp:' + str(cj_tmp))
+        # update w
+        old_w = np.copy(w)
 
 if __name__ == '__main__':
     main()
