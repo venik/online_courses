@@ -1,55 +1,74 @@
 import numpy as np
 from setup_problem import load_problem
-
+from sklearn.base import BaseEstimator, RegressorMixin
 import matplotlib.pyplot as plt
 
-
-def squareloss(X, y, w):
-    # Average square error
-    residuals = X.dot(w) - y
-    return np.dot(residuals, residuals) / len(y)
+# Reference: Machine Learning: A Probabilistic Perspective 1st Edition by Kevin P. Murphy. Chapter 13.4.1
+# Example from the book
+# https://github.com/probml/pmtksupport/blob/master/markSchmidt-9march2011/markSchmidt/lasso/LassoShooting.m
 
 
-def shooting(X, y, lmbd=1, zero_start=False, random_coordinate=False):
-    n, num_bfs = X.shape
+class LassoRegression(BaseEstimator, RegressorMixin):
+    def __init__(self, l1reg=1, zero_start=False, random_coordinate=False):
+        if l1reg <= 0.0:
+            raise ValueError('penalty cannot be negative or zero')
+        self.l1reg = l1reg
+        self.zero_start_ = zero_start
+        self.random_coordinate_ = random_coordinate
 
-    # Zero weights VS Ridge regression weights
-    if zero_start:
-        w = np.zeros((400,))
-    else:
-        w = np.linalg.inv(X.T.dot(X) + lmbd * np.eye(num_bfs)).dot(X.T.dot(y))
+    def fit(self, X, y):
+        n, num_bfs = X.shape
 
-    old_w = np.copy(w)
+        def shooting(X, y):
+            old_w = np.copy(w)
+            XX2 = X.T.dot(X) * 2
 
-    # print('w shape: ' + str(w.shape))
+            coordinates = np.random.permutation(range(len(w))) if self.random_coordinate_ else range(len(w))
+            for k in range(1000):
+                for j in coordinates:
+                    aj = XX2[j, j]
+                    cj = 2 * X[:, [j]].T.dot(y - X.dot(w) + w[j] * X[:, j])
+                    positive_part = np.sign(cj) * (np.abs(cj) - self.l1reg) if np.abs(cj) - self.l1reg > 0 else 0
+                    w[j] = 0 if aj == 0 and cj == 0 else positive_part / aj
 
-    XX2 = X.T.dot(X) * 2
+                # Average square error
+                residuals = X.dot(w) - y
+                score = np.dot(residuals, residuals) / len(y)
+                diff = np.sum(np.abs(old_w - w))
 
-    coordinates = np.random.permutation(range(len(w))) if random_coordinate else range(len(w))
-    for k in range(1000):
-        # for j in range(X.shape[1]):
-        for j in coordinates:
-            aj = XX2[j, j]
-            cj = 2 * X[:, [j]].T.dot(y - X.dot(w) + w[j] * X[:, j])
-            positive_part = np.sign(cj) * (np.abs(cj) - lmbd) if np.abs(cj) - lmbd > 0 else 0
-            # print('\tbefore j: {:} w[j]: {:}'.format(j, w[j]))
-            # print('\t => aj: {:} cj: {:} positive: {:} diff: {:}'.format(aj, cj, positive_part, (np.abs(cj) - lmbd)))
-            w[j] = 0 if aj == 0 and cj == 0 else positive_part / aj
-            # print('\tafter j: {:} w[j]: {:}'.format(j, w[j]))
+                if diff < 10e-8:
+                    print("early exit on k: {:} with score: {:.8f}".format(k, score))
+                    break
+                # update w
+                old_w = np.copy(w)
 
+            return w
+
+        # Zero weights VS Ridge regression weights
+        if self.zero_start_:
+            w = np.zeros((num_bfs,))
+        else:
+            w = np.linalg.inv(X.T.dot(X) + self.l1reg * np.eye(num_bfs)).dot(X.T.dot(y))
+
+        self.w_ = shooting(X, y)
+        return self
+
+    def predict(self, X):
+        try:
+            getattr(self, "w_")
+        except AttributeError:
+            raise RuntimeError("You must train classifer before predicting data!")
+        # print(str(self.w_))
+        return np.dot(X, self.w_)
+
+    def score(self, X, y):
         # Average square error
-        residuals = X.dot(w) - y
-        score = np.dot(residuals, residuals) / len(y)
-        diff = np.sum(np.abs(old_w - w))
-        # print("k: {:} diff: {:.4f} score: {:.4f}".format(k, diff, score))
-
-        if diff < 10e-8:
-            print("early exit on k: {:} with score: {:.8f}".format(k, score))
-            break
-        # update w
-        old_w = np.copy(w)
-
-    return w
+        try:
+            getattr(self, "w_")
+        except AttributeError:
+            raise RuntimeError("You must train classifer before predicting data!")
+        residuals = self.predict(X) - y
+        return np.dot(residuals, residuals)/len(y)
 
 
 def main():
@@ -67,33 +86,37 @@ def main():
     plt.scatter(x_train, y_train, marker='^', c='g')
 
     best_score = np.finfo(np.float32).max
-    best_l2reg = 0.0
+    best_estimator = None
+    best_l1reg = 0.0
     legend = []
-    l2reg_costs = []
-    l2reg_range = [0.0001, 0.01, .1, .5, 1, 1.5, 1.75, 2, 5, 10, 20]
+    l1reg_costs = []
+    l1reg_range = [0.0001, 0.01, .1, .5, 1, 1.5, 1.75, 2, 5, 10, 20]
     x_plot = np.linspace(0, 1, 1000)
 
-    for l2reg in l2reg_range:
-        w = shooting(X_train, y_train, lmbd=l2reg, zero_start=False, random_coordinate=False)
+    for l1reg in l1reg_range:
+        lasso = LassoRegression(l1reg=l1reg, zero_start=False, random_coordinate=False)
+        lasso.fit(X_train, y_train)
 
         # no regularization
-        if l2reg == 0.0001:
+        if l1reg == 0.0001:
             legend.append('Regular regression')
-            plt.plot(x_plot, featurize(x_plot).dot(w))
+            plt.plot(x_plot, lasso.predict(featurize(x_plot)))
 
-        score = squareloss(X_val, y_val, w)
-        l2reg_costs.append(score)
+        score = lasso.score(X_val, y_val)
+        l1reg_costs.append(score)
 
-        score_train = squareloss(X_train, y_train, w)
+        score_train = lasso.score(X_train, y_train)
         if best_score > score:
             best_score = score
-            best_weights = w
-            best_l2reg = l2reg
+            best_estimator = lasso
+            best_l1reg = l1reg
 
-        print('l2reg: {:.4f} validation score: {:.4f} train score: {:.4f}'.format(l2reg, score, score_train))
+        print('l1reg: {:.4f} validation score: {:.4f} train score: {:.4f}'.format(l1reg, score, score_train))
 
-    legend.append('Best lasso regression estimation, lambda: {:.4f}'.format(best_l2reg))
-    plt.plot(x_plot, featurize(x_plot).dot(best_weights), '-r')
+    legend.append('Best lasso regression estimation, lambda: {:.4f}'.format(best_l1reg))
+    plt.plot(x_plot, best_estimator.predict(featurize(x_plot)), '-r')
+
+    print('length of vector w: {:} number of non-zero elements: {:}'.format(len(best_estimator.w_), np.count_nonzero(best_estimator.w_)))
 
     plt.legend(legend)
     plt.title('Lasso regression')
