@@ -68,7 +68,6 @@ def main():
     ))
 
     best_score = np.finfo(np.float32).max
-    best_weights = np.zeros(X_train[0].shape[0])
     best_estimator = None
     base_weights = np.zeros(X_train[0].shape[0])
 
@@ -91,7 +90,6 @@ def main():
         score_train = ridge_regression_estimator.score(X_train, y_train)
         if best_score > score:
             best_score = score
-            best_weights = ridge_regression_estimator.w_
             best_l2reg = l2reg
             best_estimator = ridge_regression_estimator
 
@@ -117,6 +115,7 @@ def main():
     plt.title('Ridge regression cost')
     plt.grid()
     plt.plot(l2reg_range, l2reg_costs, '-rx')
+    f1.show()
 
     # Visualize weights
     f2 = plt.figure(2)
@@ -130,22 +129,24 @@ def main():
     plt.subplot(3, 1, 2)
     plt.grid()
     plt.title('Best regularized weights')
-    plt.bar(range(X_train[0].shape[0]), best_weights)
+    plt.bar(range(X_train[0].shape[0]), ridge_regression_estimator.w_)
 
     plt.subplot(3, 1, 3)
     plt.grid()
     plt.title('Bayes regularized weights')
     plt.bar(range(X_train[0].shape[0]), coefs_true)
+    f2.show()
 
     print('Best performance with l2reg: {:.4f} score: {:.4f}'.format(best_l2reg, best_score))
+    print('length of vector w: {:} number of non-zero elements: {:}'
+          .format(len(best_estimator.w_), np.count_nonzero(best_estimator.w_)))
 
-    tmp = best_estimator.w_
-    idx = tmp < 1e-6
-    tmp[idx] = 0
-
-    print(str(tmp))
+    best_w_adjusted = np.copy(best_estimator.w_)
+    print('length of vector w: {:} number of non-zero elements with tolerance 1e-6: {:}'
+          .format(len(best_estimator.w_), np.count_nonzero(best_w_adjusted[best_w_adjusted > 1e-6])))
 
     plt.show()
+
 
 if __name__ == '__main__':
   main()

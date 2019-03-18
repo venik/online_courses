@@ -83,13 +83,17 @@ def main():
     print('y_train shape: ' + str(y_train.shape))
     print('X_train shape: ' + str(X_train.shape))
 
+    lmbd_max = np.max(2 * X_train.T.dot(y_train))
+    print('Max lambda: {:.4f}'.format(lmbd_max))
+
     best_score = np.finfo(np.float32).max
     best_estimator = None
     best_l1reg = 0.0
     legend = []
     l1reg_costs = []
     l1reg_train_costs = []
-    l1reg_range = [0.0001, 0.01, .1, .5, 1, 1.5, 1.75, 2, 5, 10, 20]
+    # l1reg_range = [0.0001, 0.01, .1, .5, 1, 1.5, 1.75, 2, 5, 10, 20]
+    l1reg_range = lmbd_max * np.power(.8, range(30))
     x_plot = np.linspace(0, 1, 1000)
 
     f1=plt.figure(1)
@@ -128,7 +132,7 @@ def main():
     f1.show()
 
     f2=plt.figure(2)
-    plt.plot(l1reg_costs, '-r^', l1reg_train_costs, '-g*')
+    plt.plot(l1reg_range, np.log(l1reg_costs), '-r^', l1reg_range, np.log(l1reg_train_costs), '-g*')
     plt.legend(['Test set score', 'Train set score'])
     plt.grid()
 
