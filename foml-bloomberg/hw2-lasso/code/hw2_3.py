@@ -83,15 +83,17 @@ def main():
     print('y_train shape: ' + str(y_train.shape))
     print('X_train shape: ' + str(X_train.shape))
 
-    plt.scatter(x_train, y_train, marker='^', c='g')
-
     best_score = np.finfo(np.float32).max
     best_estimator = None
     best_l1reg = 0.0
     legend = []
     l1reg_costs = []
+    l1reg_train_costs = []
     l1reg_range = [0.0001, 0.01, .1, .5, 1, 1.5, 1.75, 2, 5, 10, 20]
     x_plot = np.linspace(0, 1, 1000)
+
+    f1=plt.figure(1)
+    plt.scatter(x_train, y_train, marker='^', c='g')
 
     for l1reg in l1reg_range:
         lasso = LassoRegression(l1reg=l1reg, zero_start=False, random_coordinate=False)
@@ -106,6 +108,8 @@ def main():
         l1reg_costs.append(score)
 
         score_train = lasso.score(X_train, y_train)
+        l1reg_train_costs.append(score_train)
+
         if best_score > score:
             best_score = score
             best_estimator = lasso
@@ -121,6 +125,14 @@ def main():
     plt.legend(legend)
     plt.title('Lasso regression')
     plt.grid()
+    f1.show()
+
+    f2=plt.figure(2)
+    plt.plot(l1reg_costs, '-r^', l1reg_train_costs, '-g*')
+    plt.legend(['Test set score', 'Train set score'])
+    plt.grid()
+
+    f2.show()
     plt.show()
 
 
