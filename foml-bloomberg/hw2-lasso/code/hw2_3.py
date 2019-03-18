@@ -132,7 +132,7 @@ def main():
     f1.show()
 
     f2=plt.figure(2)
-    plt.plot(l1reg_range, np.log(l1reg_costs), '-r^', l1reg_range, np.log(l1reg_train_costs), '-g*')
+    plt.plot(l1reg_costs, '-r^', l1reg_train_costs, '-g*')
     plt.legend(['Test set score', 'Train set score'])
     plt.grid()
 
